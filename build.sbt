@@ -1,9 +1,23 @@
 val scala212 = "2.12.10"
-val scala213 = "2.13.1"
+val scala213 = "2.13.2"
 val supportedScalaVersions = List(scala212, scala213)
 
-ThisBuild / organization := "compstak"
-ThisBuild / scalaVersion := scala212
+inThisBuild(
+  List(
+    scalaVersion := scala213,
+    organization := "compstak",
+    homepage := Some(url("https://github.com/compstak/circe-debezium")),
+    licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+    developers := List(
+      Developer(
+        "LukaJCB",
+        "Luka Jacobowitz",
+        "luka.jacobowitz@gmail.com",
+        url("https://github.com/LukaJCB")
+      )
+    )
+  )
+)
 
 scalacOptions ++= Seq(
   "-deprecation",
@@ -26,30 +40,15 @@ addCommandAlias("fmtCheck", ";scalafmtCheck; test:scalafmtCheck; scalafmtSbtChec
 val http4sVersion = "0.21.0-RC1"
 
 lazy val commonSettings = Seq(
+  crossScalaVersions := supportedScalaVersions,
   addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.0").cross(CrossVersion.full)),
-  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
-  credentials += Credentials(
-    "Sonatype Nexus Repository Manager",
-    "nexus.compstak.com",
-    sys.env.get("NEXUS_USERNAME").getOrElse(""),
-    sys.env.get("NEXUS_PASSWORD").getOrElse("")
-  ),
-  resolvers ++= Seq(
-    "CompStak Nexus Releases".at("https://nexus.compstak.com/repository/maven-group")
-  )
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 )
 
 lazy val publishSettings = Seq(
-  crossScalaVersions := supportedScalaVersions,
-  releaseCrossBuild := true,
-  publishMavenStyle := true,
   publishArtifact in Test := false,
   pomIncludeRepository := { _ =>
     false
-  },
-  publishTo := {
-    val suffix = if (isSnapshot.value) "snapshots" else "releases"
-    Some("CompStak".at(s"https://nexus.compstak.com/repository/maven-$suffix"))
   }
 )
 

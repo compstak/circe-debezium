@@ -18,29 +18,21 @@ workflows:
   version: 2
   development:
     jobs:
-    - build:
-        context: aws-deploy
-    - test:
-        context: aws-deploy
-    - style:
-        context: aws-deploy
-    - request-release:
-        type: approval
+    - build
+    - test
+    - style
+    - publish:
+        context: nexus
         requires:
         - build
         - test
         - style
         filters:
+          tags:
+            only: /^v.*/
           branches:
             only:
               - master
-    - publish:
-        context: aws-deploy
-        requires:
-        - request-release
-        filters:
-          branches:
-            only: master
 
 jobs:
   build:
@@ -112,4 +104,4 @@ jobs:
 
     - run:
         name: Release version and bump snapshot
-        command: cat /dev/null | sbt "release cross with-defaults"
+        command: cat /dev/null | sbt ci-release
