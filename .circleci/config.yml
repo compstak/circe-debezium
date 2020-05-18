@@ -18,9 +18,18 @@ workflows:
   version: 2
   development:
     jobs:
-    - build
-    - test
-    - style
+    - build:
+        filters:
+          tags:
+            only: /^v.*/
+    - test:
+        filters:
+          tags:
+            only: /^v.*/
+    - style:
+        filters:
+          tags:
+            only: /^v.*/
     - publish:
         context: nexus
         requires:
