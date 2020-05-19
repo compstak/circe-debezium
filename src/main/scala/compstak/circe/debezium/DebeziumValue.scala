@@ -37,6 +37,11 @@ object DebeziumPayload {
     val after = Some(inserted)
     val op = DebeziumOp.Create
   }
+  case class InitialPayload[A](inserted: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
+    val before = None
+    val after = Some(inserted)
+    val op = DebeziumOp.Read
+  }
 
   def apply[A](
     before: Option[A],
@@ -47,6 +52,7 @@ object DebeziumPayload {
   ): Option[DebeziumPayload[A]] =
     op match {
       case DebeziumOp.Create => after.map(CreatePayload(_, source, tsMs))
+      case DebeziumOp.Read   => after.map(InitialPayload(_, source, tsMs))
       case DebeziumOp.Delete => before.map(DeletePayload(_, source, tsMs))
       case DebeziumOp.Update => (before, after).mapN(UpdatePayload(_, _, source, tsMs))
     }

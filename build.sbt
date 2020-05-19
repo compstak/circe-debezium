@@ -5,6 +5,7 @@ val supportedScalaVersions = List(scala212, scala213)
 inThisBuild(
   List(
     scalaVersion := scala213,
+    scalafmtOnCompile := true,
     organization := "com.compstak",
     homepage := Some(url("https://github.com/compstak/circe-debezium")),
     licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
