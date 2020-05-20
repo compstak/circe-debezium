@@ -13,7 +13,7 @@ object DebeziumOp {
   case object Read extends DebeziumOp("r")
 
   def fromString(s: String): Option[DebeziumOp] =
-    Set(Create, Update, Delete).find(_.tag === s)
+    Set(Create, Update, Delete, Read).find(_.tag === s)
 
   implicit val encoder: Encoder[DebeziumOp] = _.tag.asJson
   implicit val decoder: Decoder[DebeziumOp] =
