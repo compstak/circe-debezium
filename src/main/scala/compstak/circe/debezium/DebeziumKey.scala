@@ -2,6 +2,7 @@ package compstak.circe.debezium
 
 import io.circe.{Decoder, Encoder, Json}
 import io.circe.syntax._
+import cats.implicits._
 
 case class DebeziumKey[A](payload: DebeziumKeyPayload[A], schema: Json)
 
@@ -13,9 +14,15 @@ object DebeziumKey {
     Encoder.forProduct2("payload", "schema")(k => (k.payload, k.schema))
 }
 
-case class DebeziumKeyPayload[A](id: A)
+case class DebeziumKeyPayload[A](id: A, idName: String)
 object DebeziumKeyPayload {
   implicit def decoder[A: Decoder]: Decoder[DebeziumKeyPayload[A]] =
-    Decoder.forProduct1("id")(DebeziumKeyPayload.apply[A])
-  implicit def encoder[A: Encoder]: Encoder[DebeziumKeyPayload[A]] = dp => Json.obj("id" -> dp.id.asJson)
+    Decoder.decodeJsonObject.emap { obj =>
+      for {
+        (key, value) <- obj.toMap.headOption.toRight("Invalid KeyPayload: Empty JsonObject")
+        id <- value.as[A].leftMap(_.toString)
+      } yield DebeziumKeyPayload(id, key)
+    }
+
+  implicit def encoder[A: Encoder]: Encoder[DebeziumKeyPayload[A]] = dp => Json.obj(dp.idName -> dp.id.asJson)
 }

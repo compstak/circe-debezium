@@ -8,6 +8,42 @@ import io.circe.syntax._
 import java.time.Instant
 
 class JsonParseSpec extends AnyFlatSpec with Matchers {
+
+  it should "parse a debezium key from the documentation" in {
+
+    val payload = DebeziumKeyPayload(1, "id")
+    val json = json"""
+      {
+        "schema": {
+          "type": "struct",
+          "name": "PostgreSQL_server.public.customers.Key",
+          "optional": false,
+          "fields": [
+                {
+                    "name": "id",
+                    "index": "0",
+                    "schema": {
+                        "type": "INT32",
+                        "optional": "false"
+                    }
+                }
+            ]
+        },
+        "payload": {
+            "id": "1"
+        }
+      }
+    """
+
+    val decoded = Decoder[DebeziumKey[Int]].decodeJson(json)
+
+    decoded.isRight shouldBe true
+
+    decoded.toOption.get.payload shouldBe payload
+
+    payload.asJson.noSpaces shouldBe """{"id":1}"""
+  }
+
   it should "parse a debezium string value" in {
 
     val json = json"""
