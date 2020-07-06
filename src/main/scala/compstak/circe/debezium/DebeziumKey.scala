@@ -11,7 +11,7 @@ object DebeziumKey {
     Decoder.forProduct2("schema", "payload")(DebeziumKey.apply[A])
 
   implicit def encoder[A: Encoder]: Encoder[DebeziumKey[A]] =
-    Encoder.forProduct2("schema", "payload")(k => (k.payload, k.schema))
+    Encoder.forProduct2("schema", "payload")(k => (k.schema, k.payload))
 }
 
 case class DebeziumKeyPayload[A](id: A, idName: String)
