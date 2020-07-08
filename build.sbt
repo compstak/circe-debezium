@@ -38,8 +38,6 @@ scalacOptions ++= Seq(
 addCommandAlias("fmtAll", ";scalafmt; test:scalafmt; scalafmtSbt")
 addCommandAlias("fmtCheck", ";scalafmtCheck; test:scalafmtCheck; scalafmtSbtCheck")
 
-val http4sVersion = "0.21.0-RC1"
-
 lazy val commonSettings = Seq(
   crossScalaVersions := supportedScalaVersions,
   addCompilerPlugin(("org.typelevel" %% "kind-projector" % "0.11.0").cross(CrossVersion.full)),
@@ -53,7 +51,7 @@ lazy val publishSettings = Seq(
   }
 )
 
-val circeV = "0.12.3"
+val circeV = "0.13.0"
 
 lazy val root = (project in file("."))
   .settings(commonSettings)
