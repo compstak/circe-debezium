@@ -79,4 +79,28 @@ class JsonParseSpec extends AnyFlatSpec with Matchers {
 
     decoded.toOption.get.payload shouldBe a[DebeziumPayload.CreatePayload[_]]
   }
+
+  it should "parse a composite debezium key" in {
+    val json = json"""
+      {
+        "schema": {
+          "type": "struct",
+          "fields": [{
+            "type": "int32",
+            "optional": false,
+            "field": "id"
+          }, {
+            "type": "string",
+            "optional": false,
+            "field": "data"
+          }],
+          "optional": false,
+          "name": "experiment.experiment.atable.Key"
+        },
+        "payload": {
+          "id": 43,
+          "data": "2020-07-08T14:15:14.441-04:00"
+        }
+      }"""
+  }
 }
