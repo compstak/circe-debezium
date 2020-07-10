@@ -1,10 +1,10 @@
 package compstak.circe.debezium
 
-import io.circe.{Decoder, Encoder, Json}
+import io.circe.{Decoder, Encoder, Json, JsonObject}
 import io.circe.syntax._
 import cats.implicits._
 
-case class DebeziumKey[A](schema: Json, payload: DebeziumKeyPayload[A])
+case class DebeziumKey[A](schema: JsonObject, payload: DebeziumKeyPayload[A])
 
 object DebeziumKey {
   implicit def decoder[A: Decoder]: Decoder[DebeziumKey[A]] =
