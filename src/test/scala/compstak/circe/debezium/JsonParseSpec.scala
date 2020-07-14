@@ -6,31 +6,27 @@ import io.circe.literal._
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
 import java.time.Instant
+import io.circe.JsonObject
 
 class JsonParseSpec extends AnyFlatSpec with Matchers {
 
   it should "parse a debezium key from the documentation" in {
 
-    val payload = DebeziumKeyPayload(1, "id")
+    val payload = DebeziumKeyPayload.simple(1, "id")
     val json = json"""
       {
         "schema": {
           "type": "struct",
-          "name": "PostgreSQL_server.public.customers.Key",
+          "fields": [{
+            "type": "int32",
+            "optional": false,
+            "field": "id"
+          }],
           "optional": false,
-          "fields": [
-                {
-                    "name": "id",
-                    "index": "0",
-                    "schema": {
-                        "type": "INT32",
-                        "optional": "false"
-                    }
-                }
-            ]
+          "name": "experiment.public.atable.Key"
         },
         "payload": {
-            "id": "1"
+          "id": 1
         }
       }
     """
@@ -39,7 +35,10 @@ class JsonParseSpec extends AnyFlatSpec with Matchers {
 
     decoded.isRight shouldBe true
 
-    decoded.toOption.get.payload shouldBe payload
+    val key = decoded.toOption.get
+    key.payload shouldBe payload
+    key.schema.fields.length shouldBe 1
+    key.schema.fields.headOption.get.optional shouldBe false
 
     payload.asJson.noSpaces shouldBe """{"id":1}"""
   }
@@ -81,6 +80,23 @@ class JsonParseSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "parse a composite debezium key" in {
+
+    case class AtableKey(id: Int, data: String)
+    val key = AtableKey(43, "foo")
+
+    implicit val encoderAtable: Encoder[AtableKey] = Encoder.forProduct2("id", "data")(a => (a.id, a.data))
+    implicit val decoderAtable: Decoder[AtableKey] = Decoder.forProduct2("id", "data")(AtableKey.apply)
+
+    val debeziumKey = DebeziumKey(
+      DebeziumKeySchema(
+        List(
+          DebeziumFieldSchema(DebeziumSchemaPrimitive.Int32, false, "id"),
+          DebeziumFieldSchema(DebeziumSchemaPrimitive.String, false, "data")
+        ),
+        "experiment.experiment.atable.Key"
+      ),
+      DebeziumKeyPayload.CompositeKeyPayload(key)
+    )
     val json = json"""
       {
         "schema": {
@@ -99,8 +115,18 @@ class JsonParseSpec extends AnyFlatSpec with Matchers {
         },
         "payload": {
           "id": 43,
-          "data": "2020-07-08T14:15:14.441-04:00"
+          "data": "foo"
         }
       }"""
+
+    val parsed = Decoder[DebeziumKey[AtableKey]].decodeJson(json)
+
+    parsed.isRight shouldBe true
+
+    val decoded = parsed.toOption.get
+    decoded shouldEqual debeziumKey
+    decoded.payload shouldBe a[DebeziumKeyPayload.CompositeKeyPayload[_]]
+
+    debeziumKey.asJson shouldEqual json
   }
 }
