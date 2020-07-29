@@ -22,14 +22,13 @@ sealed trait DebeziumPayload[A] {
   val tsMs: Long
 }
 object DebeziumPayload {
-  case class UpdatePayload[A](predecessor: Option[A], successor: Option[A], source: Json, tsMs: Long)
-      extends DebeziumPayload[A] {
-    val before = predecessor
-    val after = successor
+  case class UpdatePayload[A](predecessor: A, successor: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
+    val before = Some(predecessor)
+    val after = Some(successor)
     val op = DebeziumOp.Update
   }
-  case class DeletePayload[A](deleted: Option[A], source: Json, tsMs: Long) extends DebeziumPayload[A] {
-    val before = deleted
+  case class DeletePayload[A](deleted: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
+    val before = Some(deleted)
     val after = None
     val op = DebeziumOp.Delete
   }
@@ -54,8 +53,8 @@ object DebeziumPayload {
     op match {
       case DebeziumOp.Create => after.toRight("Missing 'after' in CreatePayload").map(CreatePayload(_, source, tsMs))
       case DebeziumOp.Read   => after.toRight("Missing 'after' in InitialPayload").map(InitialPayload(_, source, tsMs))
-      case DebeziumOp.Delete => DeletePayload(before, source, tsMs).asRight
-      case DebeziumOp.Update => UpdatePayload(before, after, source, tsMs).asRight
+      case DebeziumOp.Delete => DeletePayload(before.get, source, tsMs).asRight
+      case DebeziumOp.Update => UpdatePayload(before.get, after.get, source, tsMs).asRight
     }
 
   implicit def decoder[A: Decoder]: Decoder[DebeziumPayload[A]] =
