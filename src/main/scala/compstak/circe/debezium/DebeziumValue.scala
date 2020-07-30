@@ -53,8 +53,11 @@ object DebeziumPayload {
     op match {
       case DebeziumOp.Create => after.toRight("Missing 'after' in CreatePayload").map(CreatePayload(_, source, tsMs))
       case DebeziumOp.Read   => after.toRight("Missing 'after' in InitialPayload").map(InitialPayload(_, source, tsMs))
-      case DebeziumOp.Delete => DeletePayload(before.get, source, tsMs).asRight
-      case DebeziumOp.Update => UpdatePayload(before.get, after.get, source, tsMs).asRight
+      case DebeziumOp.Delete => before.toRight("Missing 'before' in DeletePayload").map(DeletePayload(_, source, tsMs))
+      case DebeziumOp.Update =>
+        before.toRight("Missing 'before' in UpdatePayload").flatMap { b =>
+          after.toRight("Missing 'after' in UpdatePayload").map(UpdatePayload(b, _, source, tsMs))
+        }
     }
 
   implicit def decoder[A: Decoder]: Decoder[DebeziumPayload[A]] =
