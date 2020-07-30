@@ -51,17 +51,30 @@ lazy val publishSettings = Seq(
   }
 )
 
-val circeV = "0.13.0"
+val circeV  = "0.13.0"
+val tcsV    = "0.37.0"
+val doobieV = "0.8.8"
 
 lazy val root = (project in file("."))
+  .configs(IntegrationTest)
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
+    Defaults.itSettings,
     name := "circe-debezium",
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core" % circeV,
       "io.circe" %% "circe-parser" % circeV % Test,
       "io.circe" %% "circe-literal" % circeV % Test,
-      "org.scalatest" %% "scalatest" % "3.1.2" % Test
+      "ch.qos.logback"              % "logback-classic"                          % "1.2.3" % "runtime",
+      "org.scalatest"              %% "scalatest"                                % "3.1.2" % "test, it",
+      "org.tpolecat"               %% "doobie-postgres"                          % doobieV % "it",
+      "org.flywaydb"                % "flyway-core"                              % "6.4.2" % "it",
+      "org.tpolecat"               %% "doobie-scalatest"                         % doobieV % "it",
+      "com.codecommit"             %% "cats-effect-testing-scalatest-scalacheck" % "0.4.0" % "it",
+      "com.github.alexarchambault" %% "scalacheck-shapeless_1.14"                % "1.2.3" % "it",
+      "com.dimafeng"               %% "testcontainers-scala-scalatest"           % tcsV    % "it",
+      "com.dimafeng"               %% "testcontainers-scala-postgresql"          % tcsV    % "it",
+      "com.dimafeng"               %% "testcontainers-scala-kafka"               % tcsV    % "it"
     )
   )
