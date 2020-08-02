@@ -196,19 +196,16 @@ class CirceDebeziumSpec
 
       for {
         _ <- client.expect[Json](POST(config, debeziumUri / "connectors"))
-        r <- consumerStream[IO]
+        _ <- consumerStream[IO]
           .using(consumerSettings)
           .evalTap(
             _.subscribeTo(s"${connectorName + "." + pgUser + ".debezium"}")
           )
           .flatMap(_.stream)
-          .map(_.record.value.payload)
           .interruptAfter(2.seconds)
-          .attempt
-          .forall(_.isRight)
-          .compile.lastOrError
+          .compile.drain
 
-      } yield (r should be (true))
+      } yield succeed
     }
   }
 
