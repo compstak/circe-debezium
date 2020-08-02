@@ -1,5 +1,7 @@
 package compstak.circe.debezium
 
+import scala.concurrent.duration._
+
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cats.effect.testing.scalatest.scalacheck.EffectCheckerAsserting
 
@@ -55,13 +57,13 @@ class CirceDebeziumSpec
     IO.fromEither(decode[DebeziumValue[Debezium]](new String(bytes, "UTF8")))
   }
 
-  // We need a ContextShift[IO] before we can construct a Transactor[IO]. The passed ExecutionContext
-  // is where nonblocking operations will be executed. For testing here we're using a synchronous EC.
-  implicit val cs = IO.contextShift(ExecutionContexts.synchronous)
+  implicit val cs    = IO.contextShift(scala.concurrent.ExecutionContext.global)
+  implicit val timer = IO.timer(scala.concurrent.ExecutionContext.global)
 
-  lazy val kafka = KafkaContainer().configure { c =>
-    val _ = c.withNetwork(Network.builder().build())
-  }
+  lazy val kafka = KafkaContainer().configure { c => {
+    c.withNetwork(Network.builder().build())
+    ()
+  }}
 
   lazy val kafkaUrl = kafka.networkAliases(0) + ":9092"
 
@@ -78,10 +80,10 @@ class CirceDebeziumSpec
     dockerImageNameOverride = "postgres:11",
     username                = pgUser,
     password                = pgPW
-  ).configure { c =>
-    val _ = c.withNetwork(kafka.network)
-    val _ = c.withNetworkAliases("postgres")
-  }
+  ).configure { c => {
+    c.withNetwork(kafka.network)
+    ()
+  }}
 
   lazy val jdbcUrl = "jdbc:postgresql://" + postgres.containerIpAddress + ":" + postgres.mappedPort(pgPort) + "/"
 
@@ -194,15 +196,19 @@ class CirceDebeziumSpec
 
       for {
         _ <- client.expect[Json](POST(config, debeziumUri / "connectors"))
-        _ <- consumerStream[IO]
+        r <- consumerStream[IO]
           .using(consumerSettings)
           .evalTap(
             _.subscribeTo(s"${connectorName + "." + pgUser + ".debezium"}")
           )
           .flatMap(_.stream)
-          .compile.drain
+          .map(_.record.value.payload)
+          .interruptAfter(2.seconds)
+          .attempt
+          .forall(_.isRight)
+          .compile.lastOrError
 
-      } yield (succeed)
+      } yield (r should be (true))
     }
   }
 
