@@ -1,5 +1,5 @@
 create table DEBEZIUM (
-    FIELD1 integer           not null,
+    FIELD1 integer           not null primary key,
     FIELD2 smallint          not null,
     FIELD3 bigint            not null,
     FIELD4 boolean           not null,
