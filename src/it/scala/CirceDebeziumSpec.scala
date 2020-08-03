@@ -1,6 +1,7 @@
 package compstak.circe.debezium
 
 import scala.concurrent.duration._
+import scala.util.Random
 
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cats.effect.testing.scalatest.scalacheck.EffectCheckerAsserting
@@ -126,9 +127,8 @@ class CirceDebeziumSpec
     close.unsafeRunSync()
   }
 
-  val genDebeziumSet: Gen[Set[Debezium]] = for {
-    field1s <- Gen.sequence[List[Int], Int]((1 to 100).map(Gen.const))
-    rest    <- field1s.traverse { field1 => for {
+  def genDebeziums(field1s: List[Int]): Gen[List[Debezium]] = {
+    field1s.traverse { field1 => for {
       field2 <- Arbitrary.arbitrary[Short]
       field3 <- Arbitrary.arbitrary[Long]
       field4 <- Arbitrary.arbitrary[Boolean]
@@ -137,33 +137,30 @@ class CirceDebeziumSpec
       field7 <- Arbitrary.arbitrary[Double]
       field8 <- Arbitrary.arbitrary[Option[Int]]
     } yield Debezium(field1, field2, field3, field4, field5, field6, field7, field8) }
-  } yield rest.toSet
+  }
 
-  def insertMany(ds: Set[Debezium]): ConnectionIO[Int] = {
+  def insertMany(dl: List[Debezium]): ConnectionIO[Int] = {
     val sql = "INSERT INTO debezium (field1, field2, field3, field4, field5, field6, field7, field8) values (?, ?, ?, ?, ?, ?, ?, ?);"
-    Update[Debezium](sql).updateMany(ds.toList)
+    Update[Debezium](sql).updateMany(dl)
   }
 
-  "Interacting with PostgreSQL" - {
-
-    val trivial = sql"SELECT field1, field2, field3, field4, field5, field6, field7, field8 FROM debezium;".query[Debezium]
-
-    "A trivial SELECT typechecks" in {
-      check(trivial)
-      succeed
-    }
-
-    "Inserting a bunch of Debeziums works" in {
-      forAll (genDebeziumSet) { ds =>
-        (
-          insertMany(ds).transact(transactor) *>
-          trivial.to[Set].transact(transactor) <*
-          sql"TRUNCATE debezium;".update.run.transact(transactor)
-        )
-        .asserting(_ shouldBe ds)
-      }
-    }
+  def updateMany(dl: List[Debezium]): ConnectionIO[Int] = {
+    dl.traverse { d =>
+      Update[(Short, Long, Boolean, String, Float, Double, Option[Int], Int)]("UPDATE debezium SET field2 = ?, field3 = ?, field4 = ?, field5 = ?, field6 = ?, field7 = ?, field8 = ? WHERE field1 = ?;").run((d.field2, d.field3, d.field4, d.field5, d.field6, d.field7, d.field8, d.field1))
+    }.map(_.sum)
   }
+
+  val genDoobieProg: Gen[IO[Int]] = for {
+    count   <- Gen.choose(1, 100)
+    field1s <- Gen.sequence[List[Int], Int]((1 to count).map(Gen.const))
+    ins     <- genDebeziums(field1s)
+    perm     = Random.shuffle(field1s)
+    indices <- Gen.delay(perm.take(Random.nextInt(count) + 1))
+    ups     <- genDebeziums(indices)
+    insert  <- Gen.delay(insertMany(ins))
+    update  <- Gen.delay(updateMany(ups))
+    delete  <- Gen.delay(sql"TRUNCATE debezium".update.run)
+  } yield (insert.transact(transactor), update.transact(transactor), delete.transact(transactor)).mapN((a, b, c) => a + b + c)
 
   val connectorName = "debezium-postgresql"
   val dbServerName  = "debezium"
@@ -195,22 +192,24 @@ class CirceDebeziumSpec
     .withGroupId("group")
 
   "Interacting with Debezium" - {
-    "Creating the Debezium PostgreSQL connector succeeds" in {
-      for {
-        _ <- client.expect[Json](POST(config, debeziumUri / "connectors"))
-        _ <- IO.fromOption(genDebeziumSet.sample)(new RuntimeException("No genDebeziumSet sample")).flatMap { dbs =>
-               insertMany(dbs).transact(transactor)
-             }
-        l <- consumerStream[IO]
-          .using(consumerSettings)
-          .evalTap(
-            _.subscribeTo(s"${dbServerName + ".public.debezium"}")
-          )
-          .flatMap(_.stream)
-          .interruptAfter(2.minutes)
-          .map(_.record.value.payload)
-          .compile.toList
-      } yield succeed
+    "DebeziumPayload constructs correctly from real Debezium JSON" in {
+//      forAll (genDoobieProg) { doobie =>
+        for {
+          _ <- client.expect[Json](POST(config, debeziumUri / "connectors"))
+          _ <- IO.sleep(2.minutes)
+          _ <- genDoobieProg.sample.get // doobie
+          l <- consumerStream[IO]
+            .using(consumerSettings)
+            .evalTap(
+              _.subscribeTo(s"${dbServerName + ".public.debezium"}")
+            )
+            .flatMap(_.stream)
+            .interruptAfter(5.minutes)
+            .map(_.record.value.payload)
+            .compile.toList
+          _ <- IO(println(s"""*** LIST OF PAYLOADS: $l ***"""))
+        } yield succeed
+//      }
     }
   }
 

@@ -51,8 +51,8 @@ lazy val publishSettings = Seq(
   }
 )
 
-val circeV  = "0.13.0"
-val tcsV    = "0.37.0"
+val circeV = "0.13.0"
+val tcsV = "0.37.0"
 val doobieV = "0.9.0"
 val http4sV = "0.21.6"
 
@@ -67,19 +67,19 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-core" % circeV,
       "io.circe" %% "circe-parser" % circeV % "test, it",
       "io.circe" %% "circe-literal" % circeV % "test, it",
-      "ch.qos.logback"              % "logback-classic"                          % "1.2.3"  % "runtime",
-      "org.scalatest"              %% "scalatest"                                % "3.1.2"  % "test, it",
-      "org.tpolecat"               %% "doobie-postgres"                          % doobieV  % "it",
-      "org.flywaydb"                % "flyway-core"                              % "6.4.2"  % "it",
-      "org.tpolecat"               %% "doobie-scalatest"                         % doobieV  % "it",
-      "com.codecommit"             %% "cats-effect-testing-scalatest-scalacheck" % "0.4.0"  % "it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.14"                % "1.2.3"  % "it",
-      "io.chrisdavenport"          %% "cats-scalacheck"                          % "0.3.0"  % "it",
-      "com.dimafeng"               %% "testcontainers-scala-scalatest"           % tcsV     % "it",
-      "com.dimafeng"               %% "testcontainers-scala-postgresql"          % tcsV     % "it",
-      "com.dimafeng"               %% "testcontainers-scala-kafka"               % tcsV     % "it",
-      "org.http4s"                 %% "http4s-async-http-client"                 % http4sV  % "it",
-      "org.http4s"                 %% "http4s-circe"                             % http4sV  % "it",
-      "com.github.fd4s"            %% "fs2-kafka"                                % "1.0.0"  % "it"
+      "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
+      "org.scalatest" %% "scalatest" % "3.1.2" % "test, it",
+      "org.tpolecat" %% "doobie-postgres" % doobieV % "it",
+      "org.flywaydb" % "flyway-core" % "6.4.2" % "it",
+      "org.tpolecat" %% "doobie-scalatest" % doobieV % "it",
+      "com.codecommit" %% "cats-effect-testing-scalatest-scalacheck" % "0.4.0" % "it",
+      "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % "it",
+      "io.chrisdavenport" %% "cats-scalacheck" % "0.3.0" % "it",
+      "com.dimafeng" %% "testcontainers-scala-scalatest" % tcsV % "it",
+      "com.dimafeng" %% "testcontainers-scala-postgresql" % tcsV % "it",
+      "com.dimafeng" %% "testcontainers-scala-kafka" % tcsV % "it",
+      "org.http4s" %% "http4s-async-http-client" % http4sV % "it",
+      "org.http4s" %% "http4s-circe" % http4sV % "it",
+      "com.github.fd4s" %% "fs2-kafka" % "1.0.0" % "it"
     )
   )
