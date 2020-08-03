@@ -1,4 +1,4 @@
-create table DEBEZIUM (
+CREATE TABLE debezium (
     FIELD1 integer           not null primary key,
     FIELD2 smallint          not null,
     FIELD3 bigint            not null,

@@ -67,17 +67,12 @@ class CirceDebeziumSpec
 
   lazy val kafkaUrl = kafka.networkAliases(0) + ":9092"
 
-  lazy val consumerSettings = ConsumerSettings[IO, DebeziumKey[Int], DebeziumValue[Debezium]]
-    .withAutoOffsetReset(AutoOffsetReset.Earliest)
-    .withBootstrapServers(kafka.bootstrapServers)
-    .withGroupId("group")
-
   val pgUser = "postgres"
   val pgPW   = "postgres"
   val pgPort = 5432
 
   lazy val postgres = PostgreSQLContainer(
-    dockerImageNameOverride = "postgres:11",
+    dockerImageNameOverride = "debezium/postgres:11",
     username                = pgUser,
     password                = pgPW
   ).configure { c => {
@@ -171,40 +166,52 @@ class CirceDebeziumSpec
   }
 
   val connectorName = "debezium-postgresql"
+  val dbServerName  = "debezium"
+
+  lazy val config = json"""{
+    "name": $connectorName,
+    "config": {
+      "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+      "database.hostname": ${postgres.networkAliases(0)},
+      "database.port": ${pgPort.toString},
+      "database.user": $pgUser,
+      "database.password": $pgPW,
+      "database.server.id": "184054",
+      "database.server.name": $dbServerName,
+      "database.dbname": $pgUser,
+      "table.whitelist": "public.debezium",
+      "tasks.max": "1",
+      "database.history.kafka.bootstrap.servers": $kafkaUrl,
+      "database.history.kafka.topic": "dbhistory.debezium",
+      "database.history.skip.unparseable.ddl": "true",
+      "include.schema.changes": "true"
+    }
+  }"""
+
+  lazy val consumerSettings = ConsumerSettings[IO, DebeziumKey[Int], DebeziumValue[Debezium]]
+    .withAllowAutoCreateTopics(false)
+    .withAutoOffsetReset(AutoOffsetReset.Earliest)
+    .withBootstrapServers(kafka.bootstrapServers)
+    .withGroupId("group")
 
   "Interacting with Debezium" - {
     "Creating the Debezium PostgreSQL connector succeeds" in {
-      val config = json"""{
-          "name": $connectorName,
-          "config": {
-            "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-            "database.hostname": ${postgres.networkAliases(0)},
-            "database.port": ${pgPort.toString},
-            "database.user": $pgUser,
-            "database.password": $pgPW,
-            "database.server.id": "184054",
-            "database.server.name": "debezium",
-            "database.dbname": $pgUser,
-            "table.whitelist": "public.debezium",
-            "tasks.max": "1",
-            "database.history.kafka.bootstrap.servers": $kafkaUrl,
-            "database.history.kafka.topic": "dbhistory.debezium",
-            "database.history.skip.unparseable.ddl": "true",
-            "include.schema.changes": "true"
-          }
-        }"""
-
       for {
         _ <- client.expect[Json](POST(config, debeziumUri / "connectors"))
-        _ <- consumerStream[IO]
+        _ <- IO.fromOption(genDebeziumSet.sample)(new RuntimeException("No genDebeziumSet sample")).flatMap { dbs =>
+               insertMany(dbs).transact(transactor)
+             }
+        l <- consumerStream[IO]
           .using(consumerSettings)
           .evalTap(
-            _.subscribeTo(s"${connectorName + "." + pgUser + ".debezium"}")
+            _.subscribeTo(s"${dbServerName + "." + pgUser + ".debezium"}")
           )
           .flatMap(_.stream)
-          .interruptAfter(2.seconds)
-          .compile.drain
-
+          .interruptAfter(2.minutes)
+          .map(_.record.value.payload)
+          .compile.toList
+        s <- client.expect[Json](GET(debeziumUri / "connectors" / connectorName / "status"))
+        _ <- IO(println(s"""*** CONNECTOR STATUS: ${s.spaces2} ***"""))
       } yield succeed
     }
   }
