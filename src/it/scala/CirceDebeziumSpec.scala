@@ -204,14 +204,12 @@ class CirceDebeziumSpec
         l <- consumerStream[IO]
           .using(consumerSettings)
           .evalTap(
-            _.subscribeTo(s"${dbServerName + "." + pgUser + ".debezium"}")
+            _.subscribeTo(s"${dbServerName + ".public.debezium"}")
           )
           .flatMap(_.stream)
           .interruptAfter(2.minutes)
           .map(_.record.value.payload)
           .compile.toList
-        s <- client.expect[Json](GET(debeziumUri / "connectors" / connectorName / "status"))
-        _ <- IO(println(s"""*** CONNECTOR STATUS: ${s.spaces2} ***"""))
       } yield succeed
     }
   }
