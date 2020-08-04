@@ -118,7 +118,9 @@ class CirceDebeziumSpec
 
   override def beforeAll(): Unit = {
     val _              = flyway.migrate()
-    val (async, thunk) = AsyncHttpClient.allocate[IO]().unsafeRunSync
+    
+    val (async, thunk) = (insertMany(genDebeziums((1000 to 2000).toList).sample.get).transact(transactor) *>
+                          AsyncHttpClient.allocate[IO]()).unsafeRunSync
     client             = async
     close              = thunk
   }
