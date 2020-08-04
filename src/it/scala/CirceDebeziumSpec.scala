@@ -195,11 +195,11 @@ class CirceDebeziumSpec
 
   "Interacting with Debezium" - {
     "DebeziumPayload constructs correctly from real Debezium JSON" in {
-//      forAll (genDoobieProg) { doobie =>
-        for {
-          _ <- client.expect[Json](POST(config, debeziumUri / "connectors"))
-          _ <- IO.sleep(30.seconds)
-          _ <- genDoobieProg.sample.get // doobie
+      for {
+        _ <- client.expect[Json](POST(config, debeziumUri / "connectors"))
+        _ <- IO.sleep(30.seconds)
+        _ <- forAll (genDoobieProg) { doobie => for {
+          _ <- doobie // genDoobieProg.sample.get
           l <- consumerStream[IO]
             .using(consumerSettings)
             .evalTap(
@@ -212,8 +212,8 @@ class CirceDebeziumSpec
             .interruptAfter(2.minutes)
             .compile.toList
           _ <- IO(println(s"""*** LIST OF PAYLOADS: $l ***"""))
-        } yield succeed
-//      }
+        } yield () }
+      } yield succeed
     }
   }
 
