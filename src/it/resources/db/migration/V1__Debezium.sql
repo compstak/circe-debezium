@@ -8,3 +8,5 @@ CREATE TABLE debezium (
     FIELD7 double precision  not null,
     FIELD8 integer           null
 );
+
+ALTER TABLE debezium REPLICA IDENTITY FULL;

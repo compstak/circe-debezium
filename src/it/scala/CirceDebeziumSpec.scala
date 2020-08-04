@@ -159,7 +159,7 @@ class CirceDebeziumSpec
     ups     <- genDebeziums(indices)
     insert  <- Gen.delay(insertMany(ins))
     update  <- Gen.delay(updateMany(ups))
-    delete  <- Gen.delay(sql"TRUNCATE debezium".update.run)
+    delete  <- Gen.delay(sql"DELETE FROM debezium;".update.run)
   } yield (insert.transact(transactor), update.transact(transactor), delete.transact(transactor)).mapN((a, b, c) => a + b + c)
 
   val connectorName = "debezium-postgresql"
@@ -185,7 +185,7 @@ class CirceDebeziumSpec
     }
   }"""
 
-  lazy val consumerSettings = ConsumerSettings[IO, DebeziumKey[Int], DebeziumValue[Debezium]]
+  lazy val consumerSettings = ConsumerSettings[IO, DebeziumKey[Int], Option[DebeziumValue[Debezium]]]
     .withAllowAutoCreateTopics(false)
     .withAutoOffsetReset(AutoOffsetReset.Earliest)
     .withBootstrapServers(kafka.bootstrapServers)
@@ -196,7 +196,7 @@ class CirceDebeziumSpec
 //      forAll (genDoobieProg) { doobie =>
         for {
           _ <- client.expect[Json](POST(config, debeziumUri / "connectors"))
-          _ <- IO.sleep(2.minutes)
+          _ <- IO.sleep(30.seconds)
           _ <- genDoobieProg.sample.get // doobie
           l <- consumerStream[IO]
             .using(consumerSettings)
@@ -204,8 +204,10 @@ class CirceDebeziumSpec
               _.subscribeTo(s"${dbServerName + ".public.debezium"}")
             )
             .flatMap(_.stream)
-            .interruptAfter(5.minutes)
-            .map(_.record.value.payload)
+            .evalTap(c => if (c.record.value.isEmpty) c.offset.commit else IO.unit)
+            .mapFilter(c => c.record.value)
+            .map(_.payload)
+            .interruptAfter(2.minutes)
             .compile.toList
           _ <- IO(println(s"""*** LIST OF PAYLOADS: $l ***"""))
         } yield succeed
