@@ -14,7 +14,7 @@ object DebeziumValue {
     Encoder.forProduct2("schema", "payload")(de => (de.schema, de.payload))
 }
 
-sealed trait DebeziumPayload[A] {
+sealed trait DebeziumPayload[+A] {
   val before: Option[A]
   val after: Option[A]
   val source: Json
