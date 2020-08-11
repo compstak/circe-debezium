@@ -4,7 +4,7 @@ import cats.implicits._
 import io.circe.{Decoder, Encoder, Json, JsonObject}
 import io.circe.syntax._
 
-case class DebeziumValue[A](schema: JsonObject, payload: DebeziumPayload[A])
+case class DebeziumValue[+A](schema: JsonObject, payload: DebeziumPayload[A])
 
 object DebeziumValue {
   implicit def decoder[A: Decoder]: Decoder[DebeziumValue[A]] =
@@ -14,7 +14,7 @@ object DebeziumValue {
     Encoder.forProduct2("schema", "payload")(de => (de.schema, de.payload))
 }
 
-sealed trait DebeziumPayload[A] {
+sealed trait DebeziumPayload[+A] {
   val before: Option[A]
   val after: Option[A]
   val source: Json
