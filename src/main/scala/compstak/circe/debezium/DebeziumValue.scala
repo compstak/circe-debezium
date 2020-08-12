@@ -22,22 +22,22 @@ sealed trait DebeziumPayload[+A] {
   val tsMs: Long
 }
 object DebeziumPayload {
-  case class UpdatePayload[A](predecessor: A, successor: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
+  case class UpdatePayload[+A](predecessor: A, successor: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
     val before = Some(predecessor)
     val after = Some(successor)
     val op = DebeziumOp.Update
   }
-  case class DeletePayload[A](deleted: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
+  case class DeletePayload[+A](deleted: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
     val before = Some(deleted)
     val after = None
     val op = DebeziumOp.Delete
   }
-  case class CreatePayload[A](inserted: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
+  case class CreatePayload[+A](inserted: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
     val before = None
     val after = Some(inserted)
     val op = DebeziumOp.Create
   }
-  case class InitialPayload[A](inserted: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
+  case class InitialPayload[+A](inserted: A, source: Json, tsMs: Long) extends DebeziumPayload[A] {
     val before = None
     val after = Some(inserted)
     val op = DebeziumOp.Read
