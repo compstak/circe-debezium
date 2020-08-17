@@ -76,7 +76,7 @@ class JsonParseSpec extends AnyFlatSpec with Matchers {
     val decoded = Decoder[DebeziumValue[String]].decodeJson(json)
     decoded.isRight shouldBe true
 
-    decoded.toOption.get.payload shouldBe a[DebeziumPayload.CreatePayload[_]]
+    decoded.toOption.get.payload shouldBe a[DebeziumPayload2.CreatePayload[_]]
   }
 
   it should "parse a composite debezium key" in {
