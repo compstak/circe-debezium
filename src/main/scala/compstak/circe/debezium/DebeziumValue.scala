@@ -28,17 +28,17 @@ object DebeziumPayload2 {
     val after = Some(successor)
     val op = DebeziumOp.Update
   }
-  case class DeletePayload[+A](deleted: A, source: Json, tsMs: Long) extends DebeziumPayload2[A, Nothing] {
+  case class DeletePayload[+A, +B](deleted: A, source: Json, tsMs: Long) extends DebeziumPayload2[A, B] {
     val before = Some(deleted)
     val after = None
     val op = DebeziumOp.Delete
   }
-  case class CreatePayload[+A](inserted: A, source: Json, tsMs: Long) extends DebeziumPayload2[Nothing, A] {
+  case class CreatePayload[+A, +B](inserted: B, source: Json, tsMs: Long) extends DebeziumPayload2[A, B] {
     val before = None
     val after = Some(inserted)
     val op = DebeziumOp.Create
   }
-  case class InitialPayload[+A](inserted: A, source: Json, tsMs: Long) extends DebeziumPayload2[Nothing, A] {
+  case class InitialPayload[+A, +B](inserted: B, source: Json, tsMs: Long) extends DebeziumPayload2[A, B] {
     val before = None
     val after = Some(inserted)
     val op = DebeziumOp.Read
