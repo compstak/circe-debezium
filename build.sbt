@@ -70,7 +70,7 @@ lazy val root = (project in file("."))
       "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
       "org.scalatest" %% "scalatest" % "3.1.2" % "test, it",
       "org.tpolecat" %% "doobie-postgres" % doobieV % "it",
-      "org.flywaydb" % "flyway-core" % "6.4.2" % "it",
+      "org.flywaydb" % "flyway-core" % "6.4.4" % "it",
       "org.tpolecat" %% "doobie-scalatest" % doobieV % "it",
       "com.codecommit" %% "cats-effect-testing-scalatest-scalacheck" % "0.4.0" % "it",
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % "it",
