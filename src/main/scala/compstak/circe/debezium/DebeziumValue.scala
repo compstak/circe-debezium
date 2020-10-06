@@ -3,6 +3,10 @@ package compstak.circe.debezium
 import cats.implicits._
 import io.circe.{Decoder, Encoder, Json, JsonObject}
 import io.circe.syntax._
+import compstak.circe.debezium.DebeziumOp.Create
+import compstak.circe.debezium.DebeziumOp.Read
+import compstak.circe.debezium.DebeziumOp.Delete
+import compstak.circe.debezium.DebeziumOp.Update
 
 case class DebeziumValue2[+A, +B](schema: JsonObject, payload: DebeziumPayload2[A, B])
 
@@ -21,6 +25,7 @@ sealed trait DebeziumPayload2[+A, +B] {
   val op: DebeziumOp
   val tsMs: Long
 }
+
 object DebeziumPayload2 {
   case class UpdatePayload[+A, +B](predecessor: A, successor: B, source: Json, tsMs: Long)
       extends DebeziumPayload2[A, B] {
@@ -62,9 +67,21 @@ object DebeziumPayload2 {
     }
 
   implicit def decoder[A: Decoder, B: Decoder]: Decoder[DebeziumPayload2[A, B]] =
-    Decoder
-      .forProduct5("before", "after", "source", "op", "ts_ms")(DebeziumPayload2.apply[A, B])
-      .emap(identity)
+    c =>
+      for {
+        op <- c.downField("op").as[DebeziumOp]
+        source <- c.downField("source").as[Json]
+        tsMs <- c.downField("ts_ms").as[Long]
+        result <- op match {
+          case Create => c.downField("after").as[B].map(CreatePayload(_, source, tsMs))
+          case Read   => c.downField("after").as[B].map(InitialPayload(_, source, tsMs))
+          case Delete => c.downField("before").as[A].map(DeletePayload(_, source, tsMs))
+          case Update =>
+            c.downField("before")
+              .as[A]
+              .flatMap(before => c.downField("after").as[B].map(UpdatePayload(before, _, source, tsMs)))
+        }
+      } yield result
 
   implicit def encoder[A: Encoder, B: Encoder]: Encoder[DebeziumPayload2[A, B]] =
     Encoder.forProduct5("before", "after", "source", "op", "ts_ms")(de =>
