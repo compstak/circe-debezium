@@ -68,7 +68,7 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-parser" % circeV % "test, it",
       "io.circe" %% "circe-literal" % circeV % "test, it",
       "ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
-      "org.scalatest" %% "scalatest" % "3.1.2" % "test, it",
+      "org.scalatest" %% "scalatest" % "3.2.1" % "test, it",
       "org.tpolecat" %% "doobie-postgres" % doobieV % "it",
       "org.flywaydb" % "flyway-core" % "6.4.2" % "it",
       "org.tpolecat" %% "doobie-scalatest" % doobieV % "it",
