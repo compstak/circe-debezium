@@ -73,7 +73,7 @@ lazy val root = (project in file("."))
       "org.flywaydb" % "flyway-core" % "6.4.2" % "it",
       "org.tpolecat" %% "doobie-scalatest" % doobieV % "it",
       "com.codecommit" %% "cats-effect-testing-scalatest-scalacheck" % "0.4.0" % "it",
-      "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % "it",
+      "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.5" % "it",
       "io.chrisdavenport" %% "cats-scalacheck" % "0.3.0" % "it",
       "com.dimafeng" %% "testcontainers-scala-scalatest" % tcsV % "it",
       "com.dimafeng" %% "testcontainers-scala-postgresql" % tcsV % "it",
