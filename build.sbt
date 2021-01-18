@@ -80,6 +80,6 @@ lazy val root = (project in file("."))
       "com.dimafeng" %% "testcontainers-scala-kafka" % tcsV % "it",
       "org.http4s" %% "http4s-async-http-client" % http4sV % "it",
       "org.http4s" %% "http4s-circe" % http4sV % "it",
-      "com.github.fd4s" %% "fs2-kafka" % "1.0.0" % "it"
+      "com.github.fd4s" %% "fs2-kafka" % "1.3.0" % "it"
     )
   )
