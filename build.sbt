@@ -51,7 +51,7 @@ lazy val publishSettings = Seq(
   }
 )
 
-val circeV = "0.13.0"
+val circeV = "0.14.1"
 val tcsV = "0.37.0"
 val doobieV = "0.9.0"
 val http4sV = "0.21.6"
