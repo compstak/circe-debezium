@@ -74,7 +74,7 @@ lazy val root = (project in file("."))
       "org.tpolecat" %% "doobie-scalatest" % doobieV % "it",
       "com.codecommit" %% "cats-effect-testing-scalatest-scalacheck" % "0.4.0" % "it",
       "com.github.alexarchambault" %% "scalacheck-shapeless_1.14" % "1.2.3" % "it",
-      "io.chrisdavenport" %% "cats-scalacheck" % "0.3.0" % "it",
+      "io.chrisdavenport" %% "cats-scalacheck" % "0.3.1" % "it",
       "com.dimafeng" %% "testcontainers-scala-scalatest" % tcsV % "it",
       "com.dimafeng" %% "testcontainers-scala-postgresql" % tcsV % "it",
       "com.dimafeng" %% "testcontainers-scala-kafka" % tcsV % "it",
