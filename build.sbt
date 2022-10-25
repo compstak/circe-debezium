@@ -1,5 +1,5 @@
 val scala212 = "2.12.10"
-val scala213 = "2.13.2"
+val scala213 = "2.13.10"
 val supportedScalaVersions = List(scala212, scala213)
 
 inThisBuild(
